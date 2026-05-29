@@ -14,25 +14,135 @@ O objetivo do projeto e atender a atividade de desenvolvimento de um app mobile 
 
 ```text
 Proj-turistai/
-├── README.md
-└── docs/
-    ├── API_CONTRATO.md
-    ├── ARQUITETURA.md
-    ├── PLANO_IMPLEMENTACAO.md
-    ├── ROTEIRO_APRESENTACAO.md
-    ├── TESTES_MANUAIS.md
-    └── TRABALHO_ACADEMICO.md
-```
-
-Quando a implementacao comecar, a estrutura prevista sera:
-
-```text
-Proj-turistai/
-├── backend/       # API Node hospedada na Vercel
-├── mobile/        # Aplicativo Flutter
+├── backend/       # API Node local/Vercel que chama a Gemini
+├── mobile/        # Aplicativo Flutter Android
 ├── docs/          # Documentacao academica e tecnica
 └── README.md
 ```
+
+Documentos principais:
+
+```text
+docs/
+├── API_CONTRATO.md
+├── ARQUITETURA.md
+├── PLANO_IMPLEMENTACAO.md
+├── ROTEIRO_APRESENTACAO.md
+├── TESTES_MANUAIS.md
+└── TRABALHO_ACADEMICO.md
+```
+
+Estrutura principal do backend:
+
+```text
+backend/
+├── api/
+│   └── recommendations.js
+├── src/
+│   ├── gemini_recommendations.js
+│   ├── http_server.js
+│   └── recommendations.js
+├── test/
+└── package.json
+```
+
+Estrutura principal do app:
+
+```text
+mobile/
+├── android/
+├── lib/
+│   ├── main.dart
+│   └── services/
+├── test/
+└── pubspec.yaml
+```
+
+## Documentos principais
+
+- [Trabalho academico](docs/TRABALHO_ACADEMICO.md)
+- [Arquitetura](docs/ARQUITETURA.md)
+- [Contrato da API](docs/API_CONTRATO.md)
+- [Plano de implementacao](docs/PLANO_IMPLEMENTACAO.md)
+- [Roteiro de apresentacao](docs/ROTEIRO_APRESENTACAO.md)
+- [Testes manuais](docs/TESTES_MANUAIS.md)
+
+## Como rodar
+
+### Backend local
+
+Sem chave da Gemini, o backend roda com recomendacao mock. Isso e util para testar o fluxo sem depender da IA:
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+Com Gemini real, configure a chave apenas como variavel de ambiente do terminal:
+
+```bash
+cd backend
+GEMINI_API_KEY="SUA_CHAVE_AQUI" npm run dev
+```
+
+Opcionalmente, e possivel trocar o modelo:
+
+```bash
+GEMINI_MODEL="gemini-3.5-flash" GEMINI_API_KEY="SUA_CHAVE_AQUI" npm run dev
+```
+
+### App Flutter
+
+Em outro terminal:
+
+```bash
+cd mobile
+flutter pub get
+flutter run --dart-define=TOURISTAI_API_BASE_URL=http://SEU_IP_LOCAL:3000
+```
+
+Exemplo:
+
+```bash
+cd mobile
+flutter run --dart-define=TOURISTAI_API_BASE_URL=http://192.168.0.101:3000
+```
+
+Para gerar APK:
+
+```bash
+cd mobile
+flutter build apk --release
+```
+
+## Testes
+
+Backend:
+
+```bash
+cd backend
+npm test
+```
+
+Flutter:
+
+```bash
+cd mobile
+flutter test
+flutter analyze
+```
+
+## O que o app faz hoje
+
+- solicita permissao de localizacao;
+- mostra latitude e longitude atuais;
+- busca locais proximos no OpenStreetMap/Overpass;
+- permite escolher categoria, tempo, orcamento, deslocamento e raio de busca;
+- mostra mapa com a posicao do usuario e marcadores dos locais encontrados;
+- envia localizacao, preferencias e locais para o backend;
+- usa Gemini API quando `GEMINI_API_KEY` esta configurada;
+- usa resposta mock quando a chave nao esta configurada.
 
 ## Ideia do app
 
@@ -72,29 +182,6 @@ Flutter foi escolhido porque o grupo ja teve contato basico com a tecnologia e p
 
 React Native tambem seria possivel, principalmente se o grupo tivesse mais experiencia com React. Porem, para o escopo escolhido, Flutter reduz o risco tecnico do mapa com OpenStreetMap e da geracao de APK para Android.
 
-## Como rodar futuramente
-
-O projeto ainda esta na fase de documentacao e planejamento. Quando a implementacao comecar, os comandos esperados serao:
-
-```bash
-cd backend
-npm install
-npm run dev
-```
-
-```bash
-cd mobile
-flutter pub get
-flutter run
-```
-
-Para gerar APK:
-
-```bash
-cd mobile
-flutter build apk --release
-```
-
 ## Cuidados importantes
 
 - Nao colocar chave da Gemini API dentro do app Flutter.
@@ -102,15 +189,6 @@ flutter build apk --release
 - Nao depender de login, banco de dados ou funcionalidades extras para a apresentacao.
 - Testar no smartphone Android fisico antes da entrega.
 - Testar tambem com internet movel, nao apenas no Wi-Fi.
-
-## Documentos principais
-
-- [Trabalho academico](docs/TRABALHO_ACADEMICO.md)
-- [Arquitetura](docs/ARQUITETURA.md)
-- [Contrato da API](docs/API_CONTRATO.md)
-- [Plano de implementacao](docs/PLANO_IMPLEMENTACAO.md)
-- [Roteiro de apresentacao](docs/ROTEIRO_APRESENTACAO.md)
-- [Testes manuais](docs/TESTES_MANUAIS.md)
 
 ## Referencias tecnicas
 
