@@ -19,7 +19,6 @@ Proj-turistai/
 │   ├── android/
 │   ├── lib/
 │   │   ├── main.dart
-│   │   ├── models/
 │   │   ├── screens/
 │   │   ├── services/
 │   │   └── widgets/
@@ -65,11 +64,11 @@ Recomendacao: comecar com `setState`. Para esse trabalho, adicionar arquitetura 
 
 ### 3.3 Criar telas iniciais
 
-Telas previstas:
+Organizacao prevista:
 
-- `HomeScreen`: formulario de preferencias;
-- `MapScreen`: mapa, marcadores e botao de recomendacao;
-- `RecommendationPanel`: area ou componente para mostrar resposta da IA.
+- `main.dart`: entrada do app e tema global;
+- `screens/home_screen.dart`: formulario de preferencias, estado da tela e fluxo principal;
+- `widgets/`: mapa, cards de status, resumo dos locais, recomendacao e dropdowns.
 
 Critico: nao gastar tempo com tela bonita antes do fluxo funcionar. Primeiro funcionar, depois melhorar visual.
 

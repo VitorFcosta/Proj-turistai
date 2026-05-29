@@ -53,7 +53,10 @@ mobile/
 ├── android/
 ├── lib/
 │   ├── main.dart
-│   └── services/
+│   ├── screens/
+│   │   └── home_screen.dart
+│   ├── services/
+│   └── widgets/
 ├── test/
 └── pubspec.yaml
 ```

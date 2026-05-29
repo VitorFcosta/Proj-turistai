@@ -5,9 +5,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:touristai/main.dart';
+import 'package:touristai/screens/home_screen.dart';
 import 'package:touristai/services/location_service.dart';
 import 'package:touristai/services/places_service.dart';
 import 'package:touristai/services/recommendation_service.dart';
+import 'package:touristai/widgets/places_summary_card.dart';
 
 void main() {
   testWidgets('shows TouristAI home screen with preference controls', (

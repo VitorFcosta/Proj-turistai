@@ -1,17 +1,37 @@
-# touristai
+# TouristAI Mobile
 
-A new Flutter project.
+Aplicativo Flutter Android do TouristAI.
 
-## Getting Started
+## Estrutura
 
-This project is a starting point for a Flutter application.
+```text
+lib/
+├── main.dart
+├── screens/
+│   └── home_screen.dart
+├── services/
+│   ├── location_service.dart
+│   ├── places_service.dart
+│   └── recommendation_service.dart
+└── widgets/
+    ├── current_location_map.dart
+    ├── location_status_card.dart
+    ├── places_summary_card.dart
+    ├── preference_dropdown.dart
+    └── recommendation_card.dart
+```
 
-A few resources to get you started if this is your first Flutter project:
+## Responsabilidades
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- `main.dart`: inicia o app, configura tema e abre a tela principal.
+- `screens/home_screen.dart`: controla o estado da tela, preferencias, busca de locais e chamada da IA.
+- `services/`: isolam GPS, Overpass/OpenStreetMap e backend de recomendacoes.
+- `widgets/`: componentes visuais reutilizados pela tela principal.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Comandos
+
+```bash
+flutter test
+flutter analyze
+flutter run --dart-define=TOURISTAI_API_BASE_URL=https://touristai-backend.vercel.app
+```
