@@ -109,6 +109,36 @@ cd mobile
 flutter run --dart-define=TOURISTAI_API_BASE_URL=http://192.168.0.101:3000
 ```
 
+### Backend na Vercel
+
+Para a apresentacao, o ideal e publicar o backend. Assim o app no celular nao depende do Mac ligado na mesma rede Wi-Fi.
+
+Dentro da pasta `backend`, faca o deploy:
+
+```bash
+cd backend
+vercel
+```
+
+Na Vercel, configure a variavel de ambiente:
+
+```text
+GEMINI_API_KEY
+```
+
+Depois de configurar a variavel, gere um deploy de producao:
+
+```bash
+vercel --prod
+```
+
+Com a URL publica da Vercel, rode o app apontando para ela:
+
+```bash
+cd mobile
+flutter run --dart-define=TOURISTAI_API_BASE_URL=https://sua-url-da-vercel.vercel.app
+```
+
 Para gerar APK:
 
 ```bash
