@@ -143,6 +143,75 @@ void main() {
     );
   });
 
+  testWidgets('explains when only five closest places are displayed', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PlacesSummaryCard(
+            places: const [
+              NearbyPlace(
+                id: 'node-6',
+                name: 'Local 6',
+                type: 'museum',
+                latitude: -23.556,
+                longitude: -46.636,
+                distanceMeters: 600,
+              ),
+              NearbyPlace(
+                id: 'node-1',
+                name: 'Local 1',
+                type: 'museum',
+                latitude: -23.551,
+                longitude: -46.631,
+                distanceMeters: 100,
+              ),
+              NearbyPlace(
+                id: 'node-3',
+                name: 'Local 3',
+                type: 'museum',
+                latitude: -23.553,
+                longitude: -46.633,
+                distanceMeters: 300,
+              ),
+              NearbyPlace(
+                id: 'node-2',
+                name: 'Local 2',
+                type: 'museum',
+                latitude: -23.552,
+                longitude: -46.632,
+                distanceMeters: 200,
+              ),
+              NearbyPlace(
+                id: 'node-5',
+                name: 'Local 5',
+                type: 'museum',
+                latitude: -23.555,
+                longitude: -46.635,
+                distanceMeters: 500,
+              ),
+              NearbyPlace(
+                id: 'node-4',
+                name: 'Local 4',
+                type: 'museum',
+                latitude: -23.554,
+                longitude: -46.634,
+                distanceMeters: 400,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('6 locais encontrados'), findsOneWidget);
+    expect(find.text('Mostrando os 5 mais proximos.'), findsOneWidget);
+    expect(find.textContaining('Local 1'), findsOneWidget);
+    expect(find.textContaining('Local 5'), findsOneWidget);
+    expect(find.textContaining('Local 6'), findsNothing);
+  });
+
   testWidgets('uses wider search when selected category returns no places', (
     tester,
   ) async {

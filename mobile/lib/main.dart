@@ -201,6 +201,15 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         recommendationError = error.message;
       });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        recommendationError =
+            'Erro de ligação. Verifique se o backend está a ser executado e se o IP configurado está correto.';
+      });
     } finally {
       if (mounted) {
         setState(() {
@@ -458,6 +467,10 @@ class PlacesSummaryCard extends StatelessWidget {
     final countLabel = places.length == 1
         ? '1 local encontrado'
         : '${places.length} locais encontrados';
+    final visiblePlaces = [...places]
+      ..sort(
+        (left, right) => left.distanceMeters.compareTo(right.distanceMeters),
+      );
 
     return Card(
       child: Padding(
@@ -466,12 +479,16 @@ class PlacesSummaryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(countLabel, style: Theme.of(context).textTheme.titleMedium),
+            if (places.length > 5) ...[
+              const SizedBox(height: 8),
+              const Text('Mostrando os 5 mais proximos.'),
+            ],
             if (notice != null) ...[const SizedBox(height: 8), Text(notice!)],
             const SizedBox(height: 8),
             if (places.isEmpty)
               const Text('Tente trocar a categoria ou buscar em outro local.')
             else
-              for (final place in places.take(5))
+              for (final place in visiblePlaces.take(5))
                 Padding(
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Text(

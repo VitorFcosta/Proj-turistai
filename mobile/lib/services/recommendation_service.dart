@@ -76,6 +76,11 @@ class RecommendationService {
     required UserPreferences preferences,
     required List<NearbyPlace> places,
   }) async {
+    final closestPlaces = [...places]
+      ..sort(
+        (left, right) => left.distanceMeters.compareTo(right.distanceMeters),
+      );
+
     final response = await client.post(
       Uri.parse('$baseUrl/api/recommendations'),
       headers: const {'Content-Type': 'application/json; charset=utf-8'},
@@ -91,7 +96,7 @@ class RecommendationService {
           'budget': preferences.budget,
           'transportMode': preferences.transportMode,
         },
-        'places': places.map(_placeToJson).toList(),
+        'places': closestPlaces.take(5).map(_placeToJson).toList(),
       }),
     );
 

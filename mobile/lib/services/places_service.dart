@@ -56,13 +56,16 @@ class PlacesService {
 
     final response = await client.post(
       _overpassEndpoint,
-      headers: const {'Content-Type': 'text/plain; charset=utf-8'},
+      headers: const {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Accept': '*/*',
+        'User-Agent': 'TouristAI/1.0 (Trabalho Academico - vitorfcosta)',
+      },
       body: query,
     );
-
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw const PlacesFailure(
-        'Nao foi possivel buscar locais proximos agora.',
+      throw PlacesFailure(
+        'Erro ${response.statusCode} no OpenStreetMap:\n${response.body}',
       );
     }
 
@@ -79,12 +82,18 @@ class PlacesService {
     final origin = LatLng(latitude, longitude);
     final distance = const Distance();
 
-    return elements
-        .whereType<Map<String, dynamic>>()
-        .map((element) => _parsePlace(element, origin, distance))
-        .nonNulls
-        .take(12)
-        .toList();
+    final places =
+        elements
+            .whereType<Map<String, dynamic>>()
+            .map((element) => _parsePlace(element, origin, distance))
+            .nonNulls
+            .toList()
+          ..sort(
+            (left, right) =>
+                left.distanceMeters.compareTo(right.distanceMeters),
+          );
+
+    return places.take(12).toList();
   }
 
   String _buildOverpassQuery({
