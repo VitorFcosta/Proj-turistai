@@ -17,11 +17,12 @@ class CurrentLocationMap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final center = LatLng(location.latitude, location.longitude);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return AspectRatio(
       aspectRatio: 16 / 10,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(18),
         child: FlutterMap(
           options: MapOptions(initialCenter: center, initialZoom: 15),
           children: [
@@ -35,10 +36,22 @@ class CurrentLocationMap extends StatelessWidget {
                   point: center,
                   width: 48,
                   height: 48,
-                  child: const Icon(
-                    Icons.my_location,
-                    color: Color(0xFF0F766E),
-                    size: 36,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.16),
+                          blurRadius: 10,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.my_location,
+                      color: Color(0xFFBF3003),
+                      size: 30,
+                    ),
                   ),
                 ),
                 for (final place in places)
@@ -46,10 +59,22 @@ class CurrentLocationMap extends StatelessWidget {
                     point: LatLng(place.latitude, place.longitude),
                     width: 42,
                     height: 42,
-                    child: const Icon(
-                      Icons.location_on,
-                      color: Color(0xFFDC2626),
-                      size: 34,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colorScheme.secondary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.14),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.place,
+                        color: Colors.white,
+                        size: 24,
+                      ),
                     ),
                   ),
               ],

@@ -16,23 +16,49 @@ class PreferenceDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<String>(
-      initialValue: value,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-      ),
-      items: [
-        for (final option in options)
-          DropdownMenuItem(value: option, child: Text(option)),
-      ],
-      onChanged: (selected) {
-        if (selected == null) {
-          return;
-        }
+    final colorScheme = Theme.of(context).colorScheme;
 
-        onChanged(selected);
-      },
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final option in options)
+                  ChoiceChip(
+                    label: Text(option),
+                    selected: option == value,
+                    onSelected: (_) => onChanged(option),
+                    selectedColor: colorScheme.primaryContainer,
+                    backgroundColor: const Color(0xFFF3F3F3),
+                    checkmarkColor: Colors.white,
+                    labelStyle: TextStyle(
+                      color: option == value
+                          ? colorScheme.onPrimaryContainer
+                          : colorScheme.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    side: BorderSide(
+                      color: option == value
+                          ? colorScheme.primary
+                          : const Color(0xFFE2E2E2),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:touristai/main.dart';
 import 'package:touristai/screens/home_screen.dart';
 import 'package:touristai/services/location_service.dart';
 import 'package:touristai/services/places_service.dart';
@@ -12,20 +11,79 @@ import 'package:touristai/services/recommendation_service.dart';
 import 'package:touristai/widgets/places_summary_card.dart';
 
 void main() {
-  testWidgets('shows TouristAI home screen with preference controls', (
+  testWidgets('shows Stitch-style start screen and opens preferences', (
     tester,
   ) async {
-    await tester.pumpWidget(const TouristAiApp());
+    await tester.pumpWidget(
+      MaterialApp(home: HomeScreen(locationService: _locationService())),
+    );
+    await tester.pumpAndSettle();
 
     expect(find.text('TouristAI'), findsOneWidget);
-    expect(find.text('Descubra lugares proximos com IA'), findsOneWidget);
+    expect(find.text('Nova exploração'), findsOneWidget);
+    expect(
+      find.textContaining('Descubra roteiros próximos com IA'),
+      findsNothing,
+    );
+    expect(find.text('Sua localização atual'), findsOneWidget);
+    expect(find.textContaining('-23.55052'), findsOneWidget);
+    expect(find.textContaining('-46.633308'), findsOneWidget);
+    expect(find.byType(FlutterMap), findsOneWidget);
+    expect(find.byIcon(Icons.person), findsNothing);
+    expect(find.byIcon(Icons.explore), findsWidgets);
+
+    await tester.tap(find.text('Nova exploração'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Personalize seu roteiro'), findsOneWidget);
     expect(find.text('Categoria'), findsOneWidget);
-    expect(find.text('Tempo disponivel'), findsOneWidget);
-    expect(find.text('Orcamento'), findsOneWidget);
+    expect(find.text('Tempo disponível'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('available-minutes-slider')),
+      findsOneWidget,
+    );
+    expect(find.text('30 minutos'), findsNothing);
+    expect(find.text('2 horas'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('radius-meters-slider')),
+      180,
+    );
+    expect(find.text('Orçamento'), findsOneWidget);
     expect(find.text('Deslocamento'), findsOneWidget);
     expect(find.text('Raio de busca'), findsOneWidget);
-    expect(find.text('Encontrar locais proximos'), findsOneWidget);
-    expect(find.byIcon(Icons.explore), findsOneWidget);
+    expect(find.byKey(const ValueKey('radius-meters-slider')), findsOneWidget);
+    expect(find.text('1,5 km'), findsNothing);
+    expect(find.text('Encontrar locais próximos'), findsOneWidget);
+  });
+
+  testWidgets('does not show start map until GPS is available', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: HomeScreen(locationService: _slowLocationService())),
+    );
+
+    expect(find.text('Buscando sua localização...'), findsOneWidget);
+    expect(find.byType(FlutterMap), findsNothing);
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sua localização atual'), findsOneWidget);
+    expect(find.byType(FlutterMap), findsOneWidget);
+  });
+
+  testWidgets('shows GPS warning instead of map when start location fails', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeScreen(locationService: _disabledLocationService()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Localização não carregada'), findsOneWidget);
+    expect(find.textContaining('Ative a localizacao'), findsOneWidget);
+    expect(find.byType(FlutterMap), findsNothing);
+    expect(find.text('Nova exploração'), findsOneWidget);
   });
 
   testWidgets('uses selected search radius when finding nearby places', (
@@ -64,14 +122,71 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('15 km'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('30 km').last);
+    await _openPreferences(tester);
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('radius-meters-slider')),
+      180,
+    );
+    tester
+        .widget<Slider>(find.byKey(const ValueKey('radius-meters-slider')))
+        .onChanged!(30000);
     await tester.pumpAndSettle();
     await _tapFindNearby(tester);
 
     expect(requestBody, contains('around:30000'));
   });
+
+  testWidgets(
+    'uses selected available minutes when generating recommendations',
+    (tester) async {
+      String? recommendationBody;
+      final recommendationService = RecommendationService(
+        client: MockClient((request) async {
+          recommendationBody = request.body;
+
+          return http.Response('''
+{
+  "title": "Roteiro cultural proximo",
+  "summary": "Sugestao para o tempo escolhido.",
+  "recommendations": [
+    {
+      "placeId": "node-123",
+      "placeName": "Museu Exemplo",
+      "suggestedOrder": 1,
+      "reason": "Fica perto e combina com cultura.",
+      "tip": "Comece por aqui."
+    }
+  ],
+  "generalTip": "Confira o horario de funcionamento."
+}
+''', 200);
+        }),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: HomeScreen(
+            locationService: _locationService(),
+            placesService: _placesService(),
+            recommendationService: recommendationService,
+          ),
+        ),
+      );
+
+      await _openPreferences(tester);
+      tester
+          .widget<Slider>(
+            find.byKey(const ValueKey('available-minutes-slider')),
+          )
+          .onChanged!(240);
+      await tester.pumpAndSettle();
+      await _tapFindNearby(tester);
+      await tester.tap(find.text('Gerar roteiro com IA', skipOffstage: false));
+      await tester.pumpAndSettle();
+
+      expect(recommendationBody, contains('"availableMinutes":240'));
+    },
+  );
 
   testWidgets('shows current coordinates after finding nearby places', (
     tester,
@@ -92,7 +207,7 @@ void main() {
 
     await _tapFindNearby(tester);
 
-    expect(find.text('Localizacao encontrada'), findsOneWidget);
+    expect(find.text('Localização atual'), findsOneWidget);
     expect(find.textContaining('-23.55052'), findsOneWidget);
     expect(find.textContaining('-46.633308'), findsOneWidget);
   });
@@ -115,8 +230,6 @@ void main() {
     );
 
     await _tapFindNearby(tester);
-    await tester.drag(find.byType(ListView), const Offset(0, -500));
-    await tester.pumpAndSettle();
 
     expect(find.byType(FlutterMap), findsOneWidget);
   });
@@ -135,6 +248,7 @@ void main() {
 
     await _tapFindNearby(tester);
 
+    expect(find.text('Locais próximos'), findsOneWidget);
     expect(
       find.text('1 local encontrado', skipOffstage: false),
       findsOneWidget,
@@ -208,7 +322,7 @@ void main() {
     );
 
     expect(find.text('6 locais encontrados'), findsOneWidget);
-    expect(find.text('Mostrando os 5 mais proximos.'), findsOneWidget);
+    expect(find.text('Mostrando os 5 mais próximos.'), findsOneWidget);
     expect(find.textContaining('Local 1'), findsOneWidget);
     expect(find.textContaining('Local 5'), findsOneWidget);
     expect(find.textContaining('Local 6'), findsNothing);
@@ -257,15 +371,13 @@ void main() {
 
     expect(requestCount, 2);
     expect(
-      find.textContaining('Mostrando opcoes gerais', skipOffstage: false),
+      find.textContaining('Mostrando opções gerais', skipOffstage: false),
       findsOneWidget,
     );
     expect(
       find.textContaining('Parque Exemplo', skipOffstage: false),
       findsOneWidget,
     );
-    await tester.drag(find.byType(ListView), const Offset(0, -350));
-    await tester.pumpAndSettle();
     expect(
       find.text('Gerar roteiro com IA', skipOffstage: false),
       findsOneWidget,
@@ -312,15 +424,20 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('15 km'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('1,5 km').last);
+    await _openPreferences(tester);
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('radius-meters-slider')),
+      180,
+    );
+    tester
+        .widget<Slider>(find.byKey(const ValueKey('radius-meters-slider')))
+        .onChanged!(500);
     await tester.pumpAndSettle();
     await _tapFindNearby(tester);
 
     expect(requestCount, 4);
     expect(
-      find.textContaining('ate 15 km', skipOffstage: false),
+      find.textContaining('até 15 km', skipOffstage: false),
       findsOneWidget,
     );
     expect(
@@ -343,11 +460,13 @@ void main() {
     );
 
     await _tapFindNearby(tester);
-    await tester.drag(find.byType(ListView), const Offset(0, -450));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('Gerar roteiro com IA', skipOffstage: false));
     await tester.pumpAndSettle();
 
+    expect(
+      find.text('Seu roteiro sugerido', skipOffstage: false),
+      findsOneWidget,
+    );
     expect(
       find.text('Roteiro cultural proximo', skipOffstage: false),
       findsOneWidget,
@@ -360,6 +479,51 @@ void main() {
       find.textContaining('Confira o horario', skipOffstage: false),
       findsOneWidget,
     );
+  });
+
+  testWidgets('shows AI loading screen while recommendation is pending', (
+    tester,
+  ) async {
+    final recommendationService = RecommendationService(
+      client: MockClient((request) async {
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+        return http.Response('''
+{
+  "title": "Roteiro cultural proximo",
+  "summary": "Sugestao para 1 hora.",
+  "recommendations": [
+    {
+      "placeId": "node-123",
+      "placeName": "Museu Exemplo",
+      "suggestedOrder": 1,
+      "reason": "Fica perto e combina com cultura.",
+      "tip": "Comece por aqui."
+    }
+  ],
+  "generalTip": "Confira o horario de funcionamento."
+}
+''', 200);
+      }),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeScreen(
+          locationService: _locationService(),
+          placesService: _placesService(),
+          recommendationService: recommendationService,
+        ),
+      ),
+    );
+
+    await _tapFindNearby(tester);
+    await tester.tap(find.text('Gerar roteiro com IA', skipOffstage: false));
+    await tester.pump();
+
+    expect(find.text('Consultando o TouristAI...'), findsOneWidget);
+    expect(find.text('IA trabalhando...'), findsOneWidget);
+
+    await tester.pumpAndSettle();
   });
 
   testWidgets('shows AI error near generate button when backend fails', (
@@ -376,13 +540,11 @@ void main() {
     );
 
     await _tapFindNearby(tester);
-    await tester.drag(find.byType(ListView), const Offset(0, -450));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('Gerar roteiro com IA', skipOffstage: false));
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Nao foi possivel gerar roteiro', skipOffstage: false),
+      find.text('Não foi possível gerar roteiro', skipOffstage: false),
       findsOneWidget,
     );
     expect(
@@ -393,10 +555,16 @@ void main() {
 }
 
 Future<void> _tapFindNearby(WidgetTester tester) async {
-  await tester.drag(find.byType(ListView), const Offset(0, -260));
+  await _openPreferences(tester);
+  await tester.tap(find.text('Encontrar locais próximos'));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Encontrar locais proximos'));
-  await tester.pumpAndSettle();
+}
+
+Future<void> _openPreferences(WidgetTester tester) async {
+  if (find.text('Nova exploração').evaluate().isNotEmpty) {
+    await tester.tap(find.text('Nova exploração'));
+    await tester.pumpAndSettle();
+  }
 }
 
 LocationService _locationService() {
@@ -404,6 +572,28 @@ LocationService _locationService() {
     isLocationServiceEnabled: () async => true,
     checkPermission: () async => LocationPermission.whileInUse,
     requestPermission: () async => LocationPermission.whileInUse,
+    getCurrentPosition: () async =>
+        _position(latitude: -23.55052, longitude: -46.633308),
+  );
+}
+
+LocationService _slowLocationService() {
+  return LocationService(
+    isLocationServiceEnabled: () async => true,
+    checkPermission: () async => LocationPermission.whileInUse,
+    requestPermission: () async => LocationPermission.whileInUse,
+    getCurrentPosition: () async {
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      return _position(latitude: -23.55052, longitude: -46.633308);
+    },
+  );
+}
+
+LocationService _disabledLocationService() {
+  return LocationService(
+    isLocationServiceEnabled: () async => false,
+    checkPermission: () async => LocationPermission.denied,
+    requestPermission: () async => LocationPermission.denied,
     getCurrentPosition: () async =>
         _position(latitude: -23.55052, longitude: -46.633308),
   );
